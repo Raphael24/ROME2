@@ -25,6 +25,8 @@ class Controller {
         virtual ~Controller();
         void    setDesiredSpeedLeft(float desiredSpeedLeft);
         void    setDesiredSpeedRight(float desiredSpeedRight);
+        float   getActualSpeedLeft();
+        float   getActualSpeedRight();
         
     private:
         
@@ -33,9 +35,9 @@ class Controller {
         
         static const float  COUNTS_PER_TURN;
         static const float  LOWPASS_FILTER_FREQUENCY;
-        static const float  KN;
-        static const float  KP;
-        static const float  MAX_VOLTAGE;
+        static const float  KN;             //Drehzahlkonstate
+        static const float  KP;             //Regelungsparameter
+        static const float  MAX_VOLTAGE;    //Batteriespannung 12V
         static const float  MIN_DUTY_CYCLE;
         static const float  MAX_DUTY_CYCLE;
 
@@ -51,12 +53,12 @@ class Controller {
         float               desiredSpeedRight;
         float               actualSpeedLeft;
         float               actualSpeedRight;
-        ThreadFlag          threadFlag;
-        Thread              thread;
-        Ticker              ticker;
+        ThreadFlag          threadFlag;     // Thread objekt
+        Thread              thread;         // Thread selber
+        Ticker              ticker;         // Timerconfig der alle z.B 1ms ein Signal schickt
         
-        void    sendThreadFlag();
-        void    run();
+        void    sendThreadFlag();           // schickt ein Signal an einen Thread
+        void    run();                      // startet Thread/Programm
 };
 
 #endif /* CONTROLLER_H_ */

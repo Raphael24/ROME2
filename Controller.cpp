@@ -9,10 +9,10 @@
 using namespace std;
 
 const float Controller::PERIOD = 0.001f;                    // period of control task, given in [s]
-const float Controller::COUNTS_PER_TURN = 1200.0f;          // encoder resolution (pololu motors: 1200.0f, maxon motors: 86016.0f)
+const float Controller::COUNTS_PER_TURN = 86016.0f;          // encoder resolution (pololu motors: 1200.0f, maxon motors: 86016.0f)
 const float Controller::LOWPASS_FILTER_FREQUENCY = 300.0f;  // given in [rad/s]
 const float Controller::KN = 40.0f;                         // speed constant in [rpm/V] (pololu motors: 40.0f, maxon motors: 45.0f)
-const float Controller::KP = 0.01f;                         // speed control parameter
+const float Controller::KP = 0.1f;                         // speed control parameter
 const float Controller::MAX_VOLTAGE = 12.0f;                // battery voltage in [V]
 const float Controller::MIN_DUTY_CYCLE = 0.02f;             // minimum duty-cycle
 const float Controller::MAX_DUTY_CYCLE = 0.98f;             // maximum duty-cycle
@@ -55,7 +55,19 @@ Controller::Controller(PwmOut& pwmLeft, PwmOut& pwmRight, EncoderCounter& counte
     
     thread.start(callback(this, &Controller::run));
     ticker.attach(callback(this, &Controller::sendThreadFlag), PERIOD);
+
 }
+
+
+float Controller::getActualSpeedLeft() {
+    return this->actualSpeedLeft;
+}
+
+float Controller::getActualSpeedRight() {
+    return this->actualSpeedRight;
+}
+
+
 
 /**
  * Deletes this Controller object.
@@ -88,7 +100,7 @@ void Controller::setDesiredSpeedRight(float desiredSpeedRight) {
  * It sends a flag to the thread to make it run again.
  */
 void Controller::sendThreadFlag() {
-    
+    // ISR: wird jede 1ms aufgerufen und saget das der Thread weiterlaufen soll
     thread.flags_set(threadFlag);
 }
 
@@ -96,10 +108,12 @@ void Controller::sendThreadFlag() {
  * This is an internal method of the controller that is running periodically.
  */
 void Controller::run() {
+    // Paralleler Thread zum hauptprogramm
 
     while (true) {
         
-        // wait for the periodic thread flag
+        // wait for the periodic thread flag, wartet bis die ISR abgarbeitet ist. 
+        // Der ganze Thread wird nur all 1ms ausgeführt.
         
         ThisThread::flags_wait_any(threadFlag);
         
@@ -118,11 +132,9 @@ void Controller::run() {
         actualSpeedRight = speedRightFilter.filter((float)countsInPastPeriodRight/COUNTS_PER_TURN/PERIOD*60.0f);
 
         // calculate desired motor voltages Uout
-
-        // bitte implementieren!
         
-        //float voltageLeft = ...
-        //float voltageRight = ...
+        float voltageLeft = KP * (desiredSpeedLeft-actualSpeedLeft) + desiredSpeedLeft/KN;
+        float voltageRight = KP * (desiredSpeedRight-actualSpeedRight) + desiredSpeedRight/KN;
 
         // calculate, limit and set the duty-cycle
 
