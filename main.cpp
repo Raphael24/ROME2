@@ -4,6 +4,7 @@
  */
 
  //test Raphael V1
+ //test Raphael V2
 
 #include "mbed.h"
 #include "IRSensor.h"
