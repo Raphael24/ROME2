@@ -15,7 +15,8 @@
 // Blinking rate in milliseconds
 #define BLINKING_RATE     100ms
 float distance_old = 0;
-
+long int counter = 0;
+float irgendwas = 1.0f;
 
 int main()
 {
@@ -52,26 +53,41 @@ int main()
     DigitalOut enableMotorDriver(PG_0);  
     DigitalIn motorDriverFault(PD_1); 
     DigitalIn motorDriverWarning(PD_0); 
+
     PwmOut pwmLeft(PF_9); 
     PwmOut pwmRight(PF_8); 
     enableMotorDriver = 1;     // Schaltet den Leistungstreiber ein 
 
     Controller controller(pwmLeft, pwmRight, counterLeft, counterRight);
 
-    controller.setDesiredSpeedLeft(100.0);  // Drehzahl in [rpm] 
-    controller.setDesiredSpeedRight(100.0); 
+    //controller.setDesiredSpeedLeft(100.0);  // Drehzahl in [rpm] 
+    //controller.setDesiredSpeedRight(100.0); 
+
+    controller.setTranslationalVelocity(0.0f);
+    controller.setRotationalVelocity(1.0f);
 
 
     DigitalIn Button(BUTTON1);
     while (true) {
-        
+
+        if(counter >= 20){
+
+            printf("8==================================================D");
+            irgendwas = irgendwas+0.5;
+            controller.setRotationalVelocity(irgendwas);
+            counter=0;
+        }
+
+
+        counter++;
+
 
         led0 = hinten < 0.2f; 
         led1 = hinten_l < 0.2f; 
-        led5 = hinten_r < 0.2f; 
-        led3 = vorne < 0.2f; 
         led2 = vorne_l < 0.2f; 
+        led3 = vorne < 0.2f; 
         led4 = vorne_r < 0.2f; 
+        led5 = hinten_r < 0.2f; 
     
         float distance0 = hinten.read();
         float distance1 = hinten_l.read();
@@ -87,10 +103,10 @@ int main()
         //printf("distance = %d [mm]\r\n", (int)(1000.0f*distance4));
         //printf("distance = %d [mm]\r\n", (int)(1000.0f*distance5));
 
-        printf("actual speed (left/right): %.3f / %.3f [rpm]\r\n", controller.getActualSpeedLeft(), controller.getActualSpeedRight());
+        printf("actual speed (left/right): %.3f / %.3f [rpm]\r\n", controller.getActualRotationalVelocity(), controller.getActualTranslationalVelocity());
+        printf("counter, irgendwas %d , %.3f [rpm]\r\n",counter,irgendwas);
 
-
-        ThisThread::sleep_for(1ms);
+        ThisThread::sleep_for(100ms);
 
 
     }
