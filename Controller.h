@@ -18,8 +18,6 @@
  * This class implements a controller that regulates the
  * speed of the two motors of the ROME2 mobile robot.
  */
-
- //TEST: Romanrap
 class Controller {
     
     public:

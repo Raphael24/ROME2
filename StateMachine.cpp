@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include "TaskWait.h"
+#include "TaskMove.h"
 #include "TaskMoveTo.h"
 #include "StateMachine.h"
 
@@ -93,13 +94,7 @@ void StateMachine::run() {
                     enableMotorDriver = 1;
                     
                     taskList.push_back(new TaskWait(controller, 0.5f));
-                    taskList.push_back(new TaskMoveTo(controller, 1.5f, 0.0f, 0.0f));
-                    taskList.push_back(new TaskWait(controller, 2.0f));
-                    taskList.push_back(new TaskMoveTo(controller, 1.5f, 0.5f, 3.14f));
-                    taskList.push_back(new TaskWait(controller, 2.0f));
-                    taskList.push_back(new TaskMoveTo(controller, 0.0f, 0.5f, 3.14f));
-                    taskList.push_back(new TaskWait(controller, 2.0f));
-                    taskList.push_back(new TaskMoveTo(controller, 0.0f, 0.0f, 0.0f));
+                    taskList.push_back(new TaskMove(controller, 0.0f, 1.0f));
                     
                     state = MOVE_FORWARD;
                 }

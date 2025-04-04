@@ -11,6 +11,9 @@
 #include "IMU.h"
 #include "Controller.h"
 #include "StateMachine.h"
+#include "HTTPServer.h"
+#include "HTTPScriptIMU.h"
+#include "HTTPScriptOrientation.h"
 
 int main() {
     
@@ -68,12 +71,25 @@ int main() {
     Controller controller(pwmLeft, pwmRight, counterLeft, counterRight);
     StateMachine stateMachine(controller, enableMotorDriver, led0, led1, led2, led3, led4, led5, button, irSensor0, irSensor1, irSensor2, irSensor3, irSensor4, irSensor5);
     
+    // create ethernet interface and webserver
+    
+    DigitalOut enableRouter(PB_15);
+    enableRouter = 1;
+    
+    EthernetInterface* ethernet = new EthernetInterface();
+    ethernet->set_network("192.168.0.10", "255.255.255.0", "192.168.0.1"); // configure IP address, netmask and gateway address
+    ethernet->connect();
+    
+    HTTPServer* httpServer = new HTTPServer(*ethernet);
+    httpServer->add("imu", new HTTPScriptIMU(imu));
+    httpServer->add("orientation", new HTTPScriptOrientation(controller, imu));
+
     while (true) {
         
         led = !led;
         
-        //printf("Acceleration: %.3f %.3f %.3f [m/s2]\r\n", imu.readAccelerationX(), imu.readAccelerationY(), imu.readAccelerationZ());
-        //printf("Gyro: %.3f %.3f %.3f [rad/s]\r\n", imu.readGyroX(), imu.readGyroY(), imu.readGyroZ());
+        printf("Acceleration: %.3f %.3f %.3f [m/s2]\r\n", imu.readAccelerationX(), imu.readAccelerationY(), imu.readAccelerationZ());
+        printf("Gyro: %.3f %.3f %.3f [rad/s]\r\n", imu.readGyroX(), imu.readGyroY(), imu.readGyroZ());
         printf("Magnetometer: %.3f %.3f %.3f [gauss]\r\n", imu.readMagnetometerX(), imu.readMagnetometerY(), imu.readMagnetometerZ());
         printf("Heading: %.1f [degrees]\r\n", 57.2957795f*imu.readHeading());
         
