@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>IMU Sensor Data</title>
+  <style type="text/css">
+    html {background-color: #223344;}
+    h2 {font-family:Helvetica,Arial,sans-serif; font-size: 24; color:#FFFFFF;}
+    p, td {font-family:Helvetica,Arial,sans-serif; font-size: 16; color:#EEEEEE;}
+  </style>
+</head>
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+  <script type="text/javascript">
+  var ax = [];
+  var ay = [];
+  var az = [];
+  var gx = [];
+  var gy = [];
+  var gz = [];
+  var mx = [];
+  var my = [];
+  var mz = [];
+  var xmlhttp = null;
+  var task = window.setInterval("update()", 50);
+  function update() {
+    if (window.XMLHttpRequest) {
+      xmlhttp = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+      try {
+        xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+      } catch (exception) {
+        try {
+          xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        } catch (exception) {}
+      }
+    }
+    xmlhttp.onreadystatechange = refresh;
+    xmlhttp.open("GET", "/cgi-bin/imu");
+    xmlhttp.send(null);
+  }
+  function refresh() {
+    if (xmlhttp.readyState == 4) {
+      var xml = xmlhttp.responseXML;
+      var floatValues = xml.getElementsByTagName("float");
+      ax.push(floatValues[0].childNodes[0].nodeValue); if (ax.length > 200) ax.shift();
+      ay.push(floatValues[1].childNodes[0].nodeValue); if (ay.length > 200) ay.shift();
+      az.push(floatValues[2].childNodes[0].nodeValue); if (az.length > 200) az.shift();
+      gx.push(floatValues[3].childNodes[0].nodeValue); if (gx.length > 200) gx.shift();
+      gy.push(floatValues[4].childNodes[0].nodeValue); if (gy.length > 200) gy.shift();
+      gz.push(floatValues[5].childNodes[0].nodeValue); if (gz.length > 200) gz.shift();
+      mx.push(floatValues[6].childNodes[0].nodeValue); if (mx.length > 200) mx.shift();
+      my.push(floatValues[7].childNodes[0].nodeValue); if (my.length > 200) my.shift();
+      mz.push(floatValues[8].childNodes[0].nodeValue); if (mz.length > 200) mz.shift();
+      drawPlot("ax", 300, 200, ax, "m/s2");
+      drawPlot("ay", 300, 200, ay, "m/s2");
+      drawPlot("az", 300, 200, az, "m/s2");
+      drawPlot("gx", 300, 200, gx, "rad/s");
+      drawPlot("gy", 300, 200, gy, "rad/s");
+      drawPlot("gz", 300, 200, gz, "rad/s");
+      drawPlot("mx", 300, 200, mx, "gauss");
+      drawPlot("my", 300, 200, my, "gauss");
+      drawPlot("mz", 300, 200, mz, "gauss");
+    }
+  }
+  function drawPlot(id, width, height, value, valueUnit) {
+    var canvas = document.getElementById(id);
+    canvas.width = 2*width;
+    canvas.height = 2*height;
+    canvas.style.width = width+"px";
+    canvas.style.height = height+"px";
+    var ctx = canvas.getContext("2d");
+    ctx.scale(2,2);
+    ctx.fillStyle = "#FFFFFF11";
+    ctx.fillRect(0.5, 0.5, width-1, height-1);
+    var valueMin = value[0];
+    var valueMax = value[0];
+    for (i = 0; i < value.length; i++) {
+      valueMin = Math.min(valueMin, value[i]);
+      valueMax = Math.max(valueMax, value[i]);
+    }
+    if (valueMax-valueMin < 2.0/Math.pow(10.0, 3)) {
+      var valueMean = (valueMin+valueMax)/2.0;
+      valueMin = valueMean-1.0/Math.pow(10.0, 3);
+      valueMax = valueMean+1.0/Math.pow(10.0, 3);
+    }
+    var valueStep = (valueMax-valueMin)/(height/100); if (valueStep < 1.0/Math.pow(10.0, 3)) valueStep = 1.0/Math.pow(10.0, 3);
+    var valueGain = Math.pow(10.0, Math.floor(Math.log(valueStep)/Math.log(10.0)));
+    valueStep = valueStep/valueGain;
+    if (valueStep > 5.0) valueStep = 5.0*valueGain; else if (valueStep > 2.0) valueStep = 2.0*valueGain; else valueStep = valueGain;
+    valueMin = Math.floor(valueMin/valueStep-0.25)*valueStep;
+    valueMax = Math.ceil(valueMax/valueStep+0.25)*valueStep;
+    ctx.strokeStyle = "#EEEEEE";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (valueCurrent = valueMin+valueStep; valueCurrent < valueMax-valueStep/2.0; valueCurrent += valueStep) {
+      ctx.moveTo(0, (valueMax-valueCurrent)/(valueMax-valueMin)*height+0.5);
+      ctx.lineTo(width, (valueMax-valueCurrent)/(valueMax-valueMin)*height+0.5);
+    }
+    ctx.stroke();
+    ctx.font = "normal 14px sans-serif";
+    ctx.textBaseline = "bottom";
+    ctx.fillStyle = "white";
+    for (valueCurrent = valueMin+valueStep; valueCurrent < valueMax-valueStep/2.0; valueCurrent += valueStep) {
+      ctx.fillText(valueCurrent.toFixed(2), 10.0, (valueMax-valueCurrent)/(valueMax-valueMin)*height-5.0);
+    }
+    ctx.fillText((value[value.length-1]*1.0).toFixed(3)+" ["+valueUnit+"]", width/2.0, (valueMax-valueCurrent+valueStep)/(valueMax-valueMin)*height-5.0);
+    ctx.strokeStyle = "#FF0000";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, (valueMax-value[0])/(valueMax-valueMin)*height+0.5);
+    for (i = 1; i < value.length; i++) {
+      ctx.lineTo(i/(value.length-1)*width, (valueMax-value[i])/(valueMax-valueMin)*height+0.5);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, width-1, height-1);
+  }
+  </script>";
+  <table width="100%" height="100%" border="0" frame="void" cellspacing="20" cellpadding="0">
+    <tr>
+      <th colspan="3" width="100%" height="20"><h2>IMU Sensor Data</h2></th>
+    </tr>
+    <tr>
+      <td>Acceleration X [m/s&sup2;]<br/><br/><canvas id="ax" width="300" height="200"></canvas></td>
+      <td>Gyro X [rad/s]<br/><br/><canvas id="gx" width="300" height="200"></canvas></td>
+      <td>Magnetometer X [gauss]<br/><br/><canvas id="mx" width="300" height="200"></canvas></td>
+    </tr>
+    <tr>
+      <td>Acceleration Y [m/s&sup2;]<br/><br/><canvas id="ay" width="300" height="200"></canvas></td>
+      <td>Gyro Y [rad/s]<br/><br/><canvas id="gy" width="300" height="200"></canvas></td>
+      <td>Magnetometer Y [gauss]<br/><br/><canvas id="my" width="300" height="200"></canvas></td>
+    </tr>
+    <tr>
+      <td>Acceleration Z [m/s&sup2;]<br/><br/><canvas id="az" width="300" height="200"></canvas></td>
+      <td>Gyro Z [rad/s]<br/><br/><canvas id="gz" width="300" height="200"></canvas></td>
+      <td>Magnetometer Z [gauss]<br/><br/><canvas id="mz" width="300" height="200"></canvas></td>
+    </tr>
+  </table>
+</body>
+</html>

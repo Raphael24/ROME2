@@ -31,6 +31,7 @@ class IMU {
         float       readMagnetometerY();
         float       readMagnetometerZ();
         float       readHeading();
+        float       readGyrorotation();
         
     private:
         
@@ -91,6 +92,7 @@ class IMU {
         LowpassFilter   magnetometerXFilter;
         LowpassFilter   magnetometerYFilter;
         float           heading;
+        float           gyrorotation;
         
         void    writeRegister(DigitalOut& cs, char address, char value);
         char    readRegister(DigitalOut& cs, char address);

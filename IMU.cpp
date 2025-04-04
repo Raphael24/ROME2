@@ -69,6 +69,7 @@ IMU::IMU(SPI& spi, DigitalOut& csAG, DigitalOut& csM) : spi(spi), csAG(csAG), cs
     magnetometerYFilter.filter(readMagnetometerY());
     
     heading = 0.0f;
+    gyrorotation = 0.0f;
     
     // start thread and timer interrupt
     
@@ -289,6 +290,11 @@ float IMU::readHeading() {
     return heading;
 }
 
+float IMU::readGyrorotation() {
+    
+    return gyrorotation;
+}
+
 /**
  * This method is called by the ticker timer interrupt service routine.
  * It sends a flag to the thread to make it run again.
@@ -329,5 +335,27 @@ void IMU::run() {
         // calculate heading with atan2 from x and y magnetometer measurements
         
         heading = atan2(-magnetometerY, magnetometerX);
+
+                // read actual measurements from magnetometer registers
+        
+        magnetometerX = magnetometerXFilter.filter(readMagnetometerZ());
+        magnetometerY = magnetometerYFilter.filter(readMagnetometerZ());
+        
+        // adjust the minimum and maximum limits, if needed
+        
+        if (magnetometerXMin > magnetometerX) magnetometerXMin = magnetometerX;
+        if (magnetometerXMax < magnetometerX) magnetometerXMax = magnetometerX;
+        if (magnetometerYMin > magnetometerY) magnetometerYMin = magnetometerY;
+        if (magnetometerYMax < magnetometerY) magnetometerYMax = magnetometerY;
+        
+        // calculate adjusted magnetometer values (gain and offset compensation)
+        
+        if (magnetometerXMin < magnetometerXMax) magnetometerX = (magnetometerX-magnetometerXMin)/(magnetometerXMax-magnetometerXMin)-0.5f;
+        if (magnetometerYMin < magnetometerYMax) magnetometerY = (magnetometerY-magnetometerYMin)/(magnetometerYMax-magnetometerYMin)-0.5f;
+
+        gyrorotation = atan2(-magnetometerY, magnetometerX);
+
+
+
     }
 }

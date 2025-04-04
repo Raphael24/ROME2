@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Odometry versus Compass</title>
+  <style type="text/css">
+    html {background-color: #223344;}
+    h2 {font-family:Helvetica,Arial,sans-serif; font-size: 24; color:#FFFFFF;}
+    p, td {font-family:Helvetica,Arial,sans-serif; font-size: 16; color:#EEEEEE;}
+  </style>
+</head>
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+  <script type="text/javascript">
+  var alpha = 0.0;
+  var heading = 0.0;
+  var gyro = 0.0;
+  var xmlhttp = null;
+  var task = window.setInterval("update()", 50);
+  function update() {
+    if (window.XMLHttpRequest) {
+      xmlhttp = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+      try {
+        xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+      } catch (exception) {
+        try {
+          xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        } catch (exception) {}
+      }
+    }
+    xmlhttp.onreadystatechange = refresh;
+    xmlhttp.open("GET", "/cgi-bin/orientation");
+    xmlhttp.send(null);
+  }
+  function refresh() {
+    if (xmlhttp.readyState == 4) {
+      var xml = xmlhttp.responseXML;
+      var floatValues = xml.getElementsByTagName("float");
+      alpha = floatValues[0].childNodes[0].nodeValue;
+      heading = floatValues[1].childNodes[0].nodeValue;
+      gyro = floatValues[2].childNodes[0].nodeValue;
+      drawPlot("orientation", 500, 500, alpha, heading);
+    }
+  }
+  function drawPlot(id, width, height, alpha, heading) {
+    var canvas = document.getElementById(id);
+    canvas.width = 2*width;
+    canvas.height = 2*height;
+    canvas.style.width = width+"px";
+    canvas.style.height = height+"px";
+    var ctx = canvas.getContext("2d");
+    ctx.scale(2,2);
+    // fill circle with background color
+    ctx.fillStyle = "#FFFFFF11";
+    ctx.beginPath();
+    ctx.arc(width/2, height/2, 249.5, 0, 2*Math.PI);
+    ctx.fill();
+    // draw circles
+    ctx.strokeStyle = "#EEEEEE";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(width/2, height/2, 249.5, 0, 2*Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(width/2, height/2, 219.5, 0, 2*Math.PI);
+    ctx.stroke();
+    // draw background lines
+    ctx.beginPath();
+    ctx.moveTo(width/2, 30.5);
+    ctx.lineTo(width/2, height-30.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(30.5, height/2);
+    ctx.lineTo(width-30.5, height/2);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(width/2+219.5*Math.cos(Math.PI/4), height/2+219.5*Math.sin(Math.PI/4));
+    ctx.lineTo(width/2-219.5*Math.cos(Math.PI/4), height/2-219.5*Math.sin(Math.PI/4));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(width/2-219.5*Math.cos(Math.PI/4), height/2+219.5*Math.sin(Math.PI/4));
+    ctx.lineTo(width/2+219.5*Math.cos(Math.PI/4), height/2-219.5*Math.sin(Math.PI/4));
+    ctx.stroke();
+    ctx.fillStyle = "#EEEEEE";
+    ctx.beginPath();
+    ctx.arc(width/2, height/2, 5, 0, 2*Math.PI);
+    ctx.fill();
+    // draw text characters
+    ctx.font = "normal 24px sans-serif";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("N", width/2-8, 30);
+    ctx.fillText("W", 4, height/2+15);
+    ctx.fillText("S", width/2-8, height-1);
+    ctx.fillText("E", width-24, height/2+15);
+    // draw alpha pointer (odometry)
+    ctx.strokeStyle = "#FF0000";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(width/2-100*Math.cos(-alpha-Math.PI/2), height/2-100*Math.sin(-alpha-Math.PI/2));
+    ctx.lineTo(width/2+235*Math.cos(-alpha-Math.PI/2), height/2+235*Math.sin(-alpha-Math.PI/2));
+    ctx.stroke();
+    ctx.fillStyle = "#FF0000";
+    ctx.beginPath();
+    ctx.arc(width/2+235*Math.cos(-alpha-Math.PI/2), height/2+235*Math.sin(-alpha-Math.PI/2), 14, 0, 2*Math.PI);
+    ctx.fill();
+    // draw heading pointer (compass)
+    ctx.strokeStyle = "#FFFF00";
+    ctx.beginPath();
+    ctx.moveTo(width/2-100*Math.cos(-heading-Math.PI/2), height/2-100*Math.sin(-heading-Math.PI/2));
+    ctx.lineTo(width/2+235*Math.cos(-heading-Math.PI/2), height/2+235*Math.sin(-heading-Math.PI/2));
+    ctx.stroke();
+    ctx.fillStyle = "#FFFF00";
+    ctx.beginPath();
+    ctx.arc(width/2+235*Math.cos(-heading-Math.PI/2), height/2+235*Math.sin(-heading-Math.PI/2), 14, 0, 2*Math.PI);
+    ctx.fill();
+    // draw heading pointer (gyro)
+    ctx.strokeStyle = "#42f563";
+    ctx.beginPath();
+    ctx.moveTo(width/2-100*Math.cos(-gyro-Math.PI/2), height/2-100*Math.sin(-gyro-Math.PI/2));
+    ctx.lineTo(width/2+235*Math.cos(-gyro-Math.PI/2), height/2+235*Math.sin(-gyro-Math.PI/2));
+    ctx.stroke();
+    ctx.fillStyle = "#42f563";
+    ctx.beginPath();
+    ctx.arc(width/2+235*Math.cos(-gyro-Math.PI/2), height/2+235*Math.sin(-gyro-Math.PI/2), 14, 0, 2*Math.PI);
+    ctx.fill();
+  }
+  </script>";
+  <table width="100%" height="100%" border="0" frame="void" cellspacing="20" cellpadding="0">
+    <tr>
+      <th width="100%" height="20"><h2>Orientation: Odometry (red) versus Compass (yellow) and Other</h2></th>
+    </tr>
+    <tr>
+      <td align="center"><canvas id="orientation" width="500" height="500"></canvas></td>
+    </tr>
+  </table>
+</body>
+</html>

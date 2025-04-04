@@ -40,6 +40,9 @@ string HTTPScriptOrientation::call(vector<string> names, vector<string> values) 
     response += "  <imu>\r\n";
     response += "    <heading><float>"+float2String(imu.readHeading())+"</float></heading>\r\n";
     response += "  </imu>\r\n";
+    response += "  <gyrotest>\r\n";
+    response += "    <gyro><float>"+float2String(imu.readGyroZ())+"</float></gyro>\r\n";
+    response += "  </gyrotest>\r\n";
     
     return response;
 }
