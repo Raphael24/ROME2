@@ -89,6 +89,9 @@ deque<Point> LIDAR::getScan() {
 deque<Point> LIDAR::getBeacons() {
     
     // get a list of all points of a scan
+    int i = 0;
+    int ii = 0;
+    Point p;
     
     deque<Point> scan = getScan();
     
@@ -97,10 +100,26 @@ deque<Point> LIDAR::getBeacons() {
     deque<Point> beacons;
     
     // bitte implementieren!
-    
-    
+    for (i= 0; i<scan.size(); i++) {
+        bool beacon = true;
+        int counter = 0;
+        
+        for(ii=0; beacon && (ii < scan.size()); ii++) {
+            float distance = scan[i].manhattanDistance(scan[ii]);
+            if (distance < 0.1f) {
+                counter++;
+            } else if(distance < 0.5f)  {
+                beacon = false;
+            }
+        }
+
+        if (beacon && (counter > 1)) {
+            beacons.push_back(scan[i]);
+        }
+    }
     
     return beacons;
+
 }
 
 /**
