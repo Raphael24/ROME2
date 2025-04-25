@@ -4,12 +4,12 @@
  * All rights reserved.
  */
 
- // Test Commit
-
 #include <stdio.h>
 #include <mbed.h>
+#include "IMU.h"
+#include "SensorFusion.h"
 #include "HTTPServer.h"
-#include "HTTPScriptLIDAR.h"
+#include "HTTPScriptSensorFusion.h"
 
 int main() {
     
@@ -25,16 +25,15 @@ int main() {
     DigitalOut led4(PD_7);
     DigitalOut led5(PD_5);
     
-    // create LIDAR device driver
+    // create inertial measurement unit object
     
-    PwmOut pwm(PE_9);
-    pwm.period(0.00005f);
-    pwm.write(0.5f);
+    SPI spi(PC_12, PC_11, PC_10);
+    DigitalOut csAG(PC_8);
+    DigitalOut csM(PC_9);
     
-    ThisThread::sleep_for(500ms);
+    IMU imu(spi, csAG, csM);
     
-    UnbufferedSerial* serial = new UnbufferedSerial(PG_14, PG_9);
-    LIDAR* lidar = new LIDAR(*serial);
+    SensorFusion sensorFusion(imu);
     
     // create ethernet interface and webserver
     
@@ -46,7 +45,7 @@ int main() {
     ethernet->connect();
     
     HTTPServer* httpServer = new HTTPServer(*ethernet);
-    httpServer->add("lidar", new HTTPScriptLIDAR(*lidar));
+    httpServer->add("sensorfusion", new HTTPScriptSensorFusion(sensorFusion));
     
     while (true) {
         
